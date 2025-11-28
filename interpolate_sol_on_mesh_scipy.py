@@ -37,7 +37,7 @@ file = "fixedpoint_dim.cgns"
 out_dir = "/net/jabba/home1/nd612731/Documents/mesh/mesh_flat_plate"
 out_file = "FP_Ma_4.5_Re_m_3.4e6_Ni_200_Nj_150_TM.cgns"
 out_file = "FP_Ma_4.5_Re_m_3.4e6_Ni_1000_Nj_150_TM.cgns"
-
+out_file = 'FP_Ma_4.5_Re_m_3.4e6_Ni_1000_Nj_150_TM_arthur_fine_y.cgns'
 
 names = ["Density", "MomentumX", "MomentumY", "MomentumZ", "EnergyStagnationDensity"]
 
@@ -233,6 +233,14 @@ print(f'At midle \t: y+ = {y_plus_1st_cell[i_cone_junction]}, \tU_tau = {U_tau[i
 print(f'At end \t\t\t: y+ = {y_plus_1st_cell[-1]}, \tU_tau = {U_tau[-1]}, \ttau_wall = {tau_wall[-1]}')
 
 
+Vel = (bft_out[1]**2+bft_out[2]**2+bft_out[3]**2)**(0.5)
+M = Vel/(dphys['gam']*bfp_out[-1]/bfp_out[0])**0.5
+Mach = M[-1,-1]
+Cv = dphys['rgaz']/(dphys['gam']-1)
+Cp = dphys['gam']*Cv
+hi = (Cp*bft_out[-1] + 0.5*Vel**2)
+hi_inf2 = hi[-1, -1]
+
 def find_n_sol_and_interp(quantity, eta, j_max_shock_normal, n=1, value2find=[0], ignore = 0):
     j_array = []
     i_array = []
@@ -283,6 +291,14 @@ def find_n_sol_and_interp(quantity, eta, j_max_shock_normal, n=1, value2find=[0]
     print('solution shape: ', i_array.shape)
 
     return i_array, j_array, eta_array
-i_delta_u99, j_delta_u99, eta_delta_u99 = find_n_sol_and_interp(V_out, grid_y_out, -1, n=1, value2find=[0.99*V_out[-1,-1]], ignore = 0)
+
+i_delta_hi, j_delta_hi, eta_delta_hi = find_n_sol_and_interp(hi, grid_y_out, None, n=1, value2find=[0.995*hi_inf2], ignore = 0)
+i_delta_u99, j_delta_u99, eta_delta_u99 = find_n_sol_and_interp(V_out, grid_y_out, None, n=1, value2find=[0.99*V_out[-1,-1]], ignore = 0)
+
+print(f'{eta_delta_hi[0] = }, {eta_delta_u99[0] = }')
+print(f'{j_delta_hi[0] = }, {j_delta_u99[0] = }')
+
+print(f'{eta_delta_hi[-1] = }, {eta_delta_u99[-1] = }')
+print(f'{j_delta_hi[-1] = }, {j_delta_u99[-1] = }')
 name_out =  out_file.split(".cgns")[0] + "_interp_yplus_{:.2f}_{:.2f}_{:.2f}_ptsCL_{}.cgns".format(y_plus_1st_cell[0], y_plus_1st_cell[i_cone_junction], y_plus_1st_cell[-1], j_delta_u99[-1])
 C.convertPyTree2File(t_out2, os.path.join(out_dir, name_out))

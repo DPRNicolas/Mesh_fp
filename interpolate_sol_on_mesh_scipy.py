@@ -38,6 +38,7 @@ out_dir = "/net/jabba/home1/nd612731/Documents/mesh/mesh_flat_plate"
 out_file = "FP_Ma_4.5_Re_m_3.4e6_Ni_200_Nj_150_TM.cgns"
 out_file = "FP_Ma_4.5_Re_m_3.4e6_Ni_1000_Nj_150_TM.cgns"
 out_file = 'FP_Ma_4.5_Re_m_3.4e6_Ni_1000_Nj_150_TM_arthur_fine_y.cgns'
+out_file = 'FP_Ma_4.5_Re_m_3.4e6_Ni_1000_Nj_200_TM_arthur_fine_y_interp_yplus_0.62_0.36_0.44_ptsCL_75.cgns'
 
 names = ["Density", "MomentumX", "MomentumY", "MomentumZ", "EnergyStagnationDensity"]
 
@@ -91,7 +92,10 @@ print("stateref: ", stateref)
 
 
 
-
+grid_x_out_node = I.getValue(I.getNodeFromName(t_out, "CoordinateX"))
+grid_y_out_node = I.getValue(I.getNodeFromName(t_out, "CoordinateY"))
+X_wall_node = grid_x_out_node[:,0]
+Y_wall_node = grid_y_out_node[:,0]
 
 t_base = C.node2Center(t_base)
 t_out = C.node2Center(t_out)
@@ -128,8 +132,7 @@ values_out = I.getValue(I.getNodeFromName(t_out, "Density"))
 
 points_out = (grid_x_out, grid_y_out)
 #Wall coordinates is x,y base
-X_wall_node = grid_x_out[:,0]
-Y_wall_node = grid_y_out[:,0]
+
 X_wall = (X_wall_node[1:]+X_wall_node[:-1])/2
 Y_wall = (Y_wall_node[1:]+Y_wall_node[:-1])/2
 Rn = np.abs(X_wall[0])
@@ -214,7 +217,7 @@ mu = comp_Sutherland(dphys['musuth'], dphys['Ts'], dphys['cs'], bft_out[4,:,:])
 print('rho inf = {}, MumX inf = {}, MumY inf = {}, Estag inf = {}'.format(bf_out[0,0,-1], bf_out[1,0,-1], bf_out[2,0,-1], bf_out[4,0,-1]))
 print('rho inf = {}, Vx inf = {}, Vy inf = {}, T inf = {}'.format(bft_out[0,0,-1], bft_out[1,0,-1], bft_out[2,0,-1], bft_out[4,0,-1]))
 
-ds_j_wall = ((grid_x_out[:, 1]-X_wall_node)**2+(grid_y_out[:, 1]-Y_wall_node)**2)**(0.5)
+ds_j_wall = ((grid_x_out[:, 1]-X_wall)**2+(grid_y_out[:, 1]-Y_wall)**2)**(0.5)
 V_out = (bft_out[1,:,:]**2+bft_out[2,:,:]**2)**0.5
 
 tau_wall = mu[:,0]*(V_out[:,1]-0)/ds_j_wall
@@ -302,3 +305,9 @@ print(f'{eta_delta_hi[-1] = }, {eta_delta_u99[-1] = }')
 print(f'{j_delta_hi[-1] = }, {j_delta_u99[-1] = }')
 name_out =  out_file.split(".cgns")[0] + "_interp_yplus_{:.2f}_{:.2f}_{:.2f}_ptsCL_{}.cgns".format(y_plus_1st_cell[0], y_plus_1st_cell[i_cone_junction], y_plus_1st_cell[-1], j_delta_u99[-1])
 C.convertPyTree2File(t_out2, os.path.join(out_dir, name_out))
+
+
+print('\nFor input mesh')
+print(f'At cell  0 point \t: y+ = {y_plus_1st_cell[0]}, \tU_tau = {U_tau[0]}, \ttau_wall = {tau_wall[0]}, ds_j = {ds_j_wall[0]}')
+print(f'At cell 50 point \t: y+ = {y_plus_1st_cell[50]}, \tU_tau = {U_tau[50]}, \ttau_wall = {tau_wall[50]}, ds_j = {ds_j_wall[50]}')
+print(f'At end \t\t\t: y+ = {y_plus_1st_cell[-1]}, \tU_tau = {U_tau[-1]}, \ttau_wall = {tau_wall[-1]}, ds_j = {ds_j_wall[-1]}')
